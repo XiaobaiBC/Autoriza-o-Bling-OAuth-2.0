@@ -28,7 +28,7 @@
 
    ```bash
    git clone https://github.com/XiaobaiBC/Bling.git
-   cd bling-oauth-example
+   cd Bling
    ```
 
 2. 安装依赖：
