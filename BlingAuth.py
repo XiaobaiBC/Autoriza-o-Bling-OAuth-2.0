@@ -15,8 +15,8 @@ class BlingAuth:
         self.auth_url = "https://bling.com.br/Api/v3/oauth/authorize"
         self.token_url = "https://bling.com.br/Api/v3/oauth/token"
         self.state = "21"
-        self.username = ""
-        self.password = ""
+        self.username = "" #  用户名
+        self.password = "" #  密码
 
     def check_url_change(self, driver, original_url, max_attempts=100, delay=0.1):
         """检查URL变化，使用轮询方式"""
