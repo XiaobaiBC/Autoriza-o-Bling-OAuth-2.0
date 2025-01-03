@@ -27,7 +27,7 @@
 1. 克隆项目到本地：
 
    ```bash
-   git clone https://github.com/XiaobaiBC/bling-oauth-example.git
+   git clone https://github.com/XiaobaiBC/Bling.git
    cd bling-oauth-example
    ```
 
