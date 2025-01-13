@@ -10,14 +10,14 @@ import time
 
 class BlingAuth:
     def __init__(self):
-        self.client_id = "a11343ab9c5401c3fb599d3131888bbffcc7efd3"
-        self.client_secret = "5a8693d9911a2e297c90703c9136d71d956ec74492326951eb33ee760953"
-        self.redirect_uri = "https://www.bodor.cn/"
+        self.client_id = ""
+        self.client_secret = ""
+        self.redirect_uri = ""
         self.auth_url = "https://bling.com.br/Api/v3/oauth/authorize"
         self.token_url = "https://bling.com.br/Api/v3/oauth/token"
         self.state = "21"
-        self.username = "zhengzaiga@gmail.com"
-        self.password = "nap_gqh*apm4jhe!ZXQ"
+        self.username = ""
+        self.password = ""
         self.access_token = None
 
     def check_url_change(self, driver, original_url: str, max_attempts: int = 100, delay: float = 0.1) -> str:
