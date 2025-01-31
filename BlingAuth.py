@@ -6,6 +6,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import urlparse, parse_qs
 import time
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
+from datetime import datetime, timedelta
 
 
 class BlingAuth:
@@ -44,7 +47,7 @@ class BlingAuth:
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.page_load_strategy = 'none'
-        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless')  # 启用无头模式（Headless Mode）。
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
@@ -53,11 +56,11 @@ class BlingAuth:
         print("启动浏览器...")
         driver = webdriver.Chrome(options=chrome_options)
         try:
-            print("访问授权页面...")
+            print("访问授权...")
             driver.get(auth_url)
             original_url = driver.current_url
 
-            print("\n等待页面元素加载...")
+            print("\n获取授权中（1/4）...")
             username_input = None
             for _ in range(10):
                 try:
@@ -72,22 +75,22 @@ class BlingAuth:
             if not username_input:
                 raise Exception("登录页面加载超时")
 
-            print("\n填写登录信息...")
+            print("\n获取授权中（2/4）...")
             password_input = driver.find_element(By.XPATH, "/html/body/div/div/div/form/div[3]/input")
             login_button = driver.find_element(By.XPATH, "/html/body/div/div/div/form/div[6]/button")
 
             username_input.send_keys(self.username)
             password_input.send_keys(self.password)
 
-            print("点击登录按钮...")
+            print("获取授权中（3/4）...")
             login_button.click()
 
-            print("等待授权重定向...")
+            print("获取授权中（4/4）...")
             current_url = self.check_url_change(driver, original_url)
             if not current_url:
                 raise Exception("URL未发生预期变化")
 
-            print(f"当前URL: {current_url}")
+            print(f"授权URL: {current_url}")
 
             parsed_url = urlparse(current_url)
             query_params = parse_qs(parsed_url.query)
@@ -99,7 +102,7 @@ class BlingAuth:
             return auth_code
 
         finally:
-            print("关闭浏览器...")
+            print("结束...")
             driver.quit()
 
     def get_access_token(self, auth_code: str) -> dict:
@@ -146,11 +149,46 @@ def main():
         print("正在获取访问令牌...")
         token_info = auth.get_access_token(auth_code)
         print("\n成功获取访问令牌:")
+        expires_in = token_info.get('expires_in')
+        expires_in = datetime.now() + timedelta(seconds=expires_in)
         print(f"Access Token: {token_info.get('access_token')}")
         print(f"Token Type: {token_info.get('token_type')}")
-        print(f"Expires In: {token_info.get('expires_in')} seconds")
-        if 'refresh_token' in token_info:
-            print(f"Refresh Token: {token_info.get('refresh_token')}")
+        print(f"Expires In: {expires_in}")
+
+        # 确保只保存 refresh_token
+        refresh_token = token_info.get('refresh_token', None)
+        if refresh_token:
+            print(f"Refresh Token: {refresh_token}")
+
+        # 将 expires_in 转换为可读的时间格式
+        expires_in_str = expires_in.strftime('%Y-%m-%d %H:%M:%S')
+
+        # -----保存xml认证文件到本地-----
+        # 创建 XML 根元素
+        root = ET.Element("TokenInfo")
+
+        # 添加子元素
+        for key, value in token_info.items():
+            # 过滤掉不需要的字段（比如scope）
+            if key == 'expires_in':
+                value = expires_in_str  # 替换为格式化后的日期时间
+            if key != 'scope':  # 排除 scope 字段
+                child = ET.SubElement(root, key)
+                child.text = str(value)
+
+        # 生成 XML 字符串
+        rough_string = ET.tostring(root, encoding="utf-8")
+
+        # 使用 minidom 进行格式化
+        dom = xml.dom.minidom.parseString(rough_string)
+        pretty_xml = dom.toprettyxml(indent="    ")  # 设置缩进为 4 个空格
+
+        # 保存格式化 XML 到本地文件
+        xml_filename = "token_info.xml"
+        with open(xml_filename, "w", encoding="utf-8") as f:
+            f.write(pretty_xml)
+
+        print(f"格式化 XML 文件已保存：{xml_filename}")
     except Exception as e:
         print(f"错误: {str(e)}")
 
